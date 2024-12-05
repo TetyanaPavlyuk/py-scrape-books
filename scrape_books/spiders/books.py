@@ -3,6 +3,8 @@ import scrapy
 from scrapy.http import Response
 from typing import Any
 
+from scrape_books.items import ScrapeBooksItem
+
 
 class BooksSpider(scrapy.Spider):
     name = "books"
@@ -22,26 +24,26 @@ class BooksSpider(scrapy.Spider):
             yield response.follow(next_page, callback=self.parse)
 
     def _parse_book_detail(self, response: Response) -> dict[str, Any]:
-        yield {
-            "title": response.css(
+        yield ScrapeBooksItem(
+            title=response.css(
                 ".product_main > h1::text"
             ).get(),
-            "price": float(response.css(
+            price=response.css(
                 ".product_main > .price_color::text"
-            ).get().replace("£", "")),
-            "amount_in_stock": int(response.css(
+            ).get(),
+            amount_in_stock=response.css(
                 ".product_main > p.instock.availability::text"
-            ).getall()[1].replace("\n", "").split()[2].replace("(", "")),
-            "rating": int(len([response.css(
-                "i.icon-star::text"
-            ).getall()])),
-            "category": response.css(
+            ).getall(),
+            rating=response.css(
+                ".product_main p.star-rating::attr(class)"
+            ).get(),
+            category=response.css(
                 "ul.breadcrumb > li:nth-last-child(2) a::text"
             ).get(),
-            "description": response.css(
+            description=response.css(
                 "#product_description + p::text"
             ).get(),
-            "upc": response.css(
+            upc=response.css(
                 "table.table-striped > tr:first-child > td::text"
             ).get()
-        }
+        )
